@@ -1,7 +1,7 @@
 (module $fizzbuzz
 
   (func $fizzbuzz
-    (LOCALS $i 1)
+    (LET $i 1)
     (loop $loop
       (if (i32.eqz (i32.rem_s $i 3))
         ($print "Fizz"))

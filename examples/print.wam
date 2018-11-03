@@ -21,7 +21,7 @@
 
   ;; Print a number
   (func $printnum (param $n i32)
-    (LOCALS $buf (STATIC_ARRAY 10))
+    (LET $buf (STATIC_ARRAY 10))
     (drop ($itoa $n $buf))
     ($print $buf)
   )
