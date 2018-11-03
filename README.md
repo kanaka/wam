@@ -89,7 +89,7 @@ wace ./fizzbuzz.wasm
 | <pre>7</pre>           | <pre>(i32.const 7)</pre> |
 | <pre>$myvar</pre>      | <pre>(get\_local $myvar)</pre> |
 | <pre>(CHR "A")</pre>   | <pre>(i32.const 0x40)</pre> |
-| <pre>"my string"</pre> | <pre>(global $S_STRING_7  i32 (i32.const 73))\n(data ... "my string\00" ...)\n...\n(i32.add (get\_global $memoryBase)<br>         (get\_global $S\_STRING\_7))</pre> |
+| <pre>"my string"</pre> | <pre>(global $S_STRING_7  i32 (i32.const 73))<br>(data ... "my string\00" ...)<br>...<br>(i32.add (get\_global $memoryBase)<br>         (get\_global $S\_STRING\_7))</pre> |
 | <pre>(AND 7 8)</pre>   | <pre>(if i32 (i32.const 7)<br>  (if i32 (i32.const 8) (i32.const 1) (i32.const 0))<br>  (i32.const 0))</pre> |
 | <pre>(OR 7 8)</pre>    | <pre>(if i32 (i32.const 7)<br>  (i32.const 1)<br>  (if i32 (i32.const 8) (i32.const 1) (i32.const 0)))</pre> |
 | <pre>(LET $i 7<br>     $j (i32.add $i 1))</pre> | <pre>(local $i i32 $j i32)<br>(set_local $i (i32.const 7)<br>(set_local $j (i32.add (get_local $i) (i32.const 1)))</pre> |
