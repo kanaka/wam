@@ -1,4 +1,4 @@
-# WAM: WebAssembly Macro language
+# wam: WebAssembly Macro language and processor
 
 ## wam syntax
 
