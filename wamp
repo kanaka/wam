@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+# Copyright Joel Martin <github@martintribe.org>
+# Licensed under MPL-2.0 (see ./LICENSE)
+# https://github.com/kanaka/wam
+
 from argparse import ArgumentParser
 from ast import literal_eval
 from itertools import chain
