@@ -223,7 +223,7 @@ def STATIC_ARRAY(args, ctx):
 def LOCALS(args, ctx):
     assert len(args) >= 2, "LOCALS takes at least 2 argument"
     assert len(args) % 2 == 0, "LOCALS takes even number of argument"
-    locals = [Literal('locals')]
+    locals = [Literal('local')]
     sets = []
     for i in range(0, len(args), 2):
         name = args[i]
