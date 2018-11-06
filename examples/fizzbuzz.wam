@@ -1,0 +1,21 @@
+(module $fizzbuzz
+
+  (func $fizzbuzz
+    (LOCALS $i 1)
+    (loop $loop
+      (if (i32.eqz (i32.rem_s $i 3))
+        ($print "Fizz"))
+      (if (i32.eqz (i32.rem_s $i 5))
+        ($print "Buzz"))
+      (if (AND (i32.rem_s $i 3)
+               (i32.rem_s $i 5))
+        ($printnum $i))
+      ($print "\n")
+
+      (set_local $i (i32.add 1 $i))
+      (br_if $loop (i32.lt_s $i 100))
+    )
+  )
+
+  (export "main" (func $fizzbuzz))
+)

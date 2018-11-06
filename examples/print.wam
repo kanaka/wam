@@ -1,0 +1,29 @@
+(module $print
+
+  (import "env" "stdout" (global $stdout i32))
+  (import "env" "fputs" (func $fputs (param i32 i32) (result i32)))
+
+  ;; Print the string at $str (no newline)
+  (func $print (param $str i32)
+    (drop ($fputs $str (get_global $stdout)))
+  )
+
+  ;; Small recursive integer to string
+  (func $itoa (param $n i32 $buf i32) (result i32)
+    (if (i32.ne 0 (i32.div_s $n 10))
+      (set_local $buf ($itoa (i32.div_s $n 10) $buf)))
+
+    (i32.store8_u $buf (i32.add (CHR "0") (i32.rem_s $n 10)))
+    (set_local $buf (i32.add $buf 1))
+    (i32.store8_u $buf (CHR "\x00"))
+    $buf
+  )
+
+  ;; Print a number
+  (func $printnum (param $n i32)
+    (LOCALS $buf (STATIC_ARRAY 10))
+    (drop ($itoa $n $buf))
+    ($print $buf)
+  )
+
+)

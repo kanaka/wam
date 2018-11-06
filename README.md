@@ -50,17 +50,50 @@ Current functionality:
 
 Future functionality:
 
-- Resolving/linking of imports and exports across multiple files.
+- Add elif construct
 - Allow bare names for global variables by implementing some limited
   lexical scope.
+- Resolving/linking of imports and exports across multiple files.
+
+## Example
+
+In the `examples/` directory is a fizzbuzz example that makes use of
+wam syntax. Use `wamp` to convert the example to wast source.
+
+```
+./wamp examples/fizzbuzz.wam examples/print.wam > fizzbuzz.wast
+```
+
+Examine the wam files and the resulting wast to see what processing
+and macro expansion was performanced by `wamp`. The wast source can be
+compiled to a wasm module using the `wasm-as` assembler from
+[binaryen](https://github.com/WebAssembly/binaryen).
+
+```
+wasm-as fizzbuzz.wast -o fizzbuzz.wasm
+```
+
+The wasm module can be executed using the
+[wac/wace](https://github.com/kanaka/wac) WebAssembly interpreter:
+
+```
+wace ./fizzbuzz.wasm
+```
 
 ## Examples of wam and equivalent wast:
 
-    ($myfun)     -> (call $myfun)
-    7            -> (i32.const 7)
-    $myvar       -> (get\_local $myvar)
-    (CHR "A")    -> (i32.const 0x40)
-    "my string"  -> (i32.add (get\_global $memoryBase) (get\_global $S\_STRING\_7))
-    (AND 7 8)    -> (if i32 (i32.const 7) (if i32 (i32.const 8) (i32.const 1) (i32.const 0)) (i32.const 0)) 
-    (OR 7 8)     -> (if i32 (i32.const 7) (i32.const 1) (if i32 (i32.const 8) (i32.const 1) (i32.const 0)))
+| wam | wast |
+| --- | ---- |
+| <pre>($myfun)</pre>    | <pre>(call $myfun)</pre> |
+| <pre>7</pre>           | <pre>(i32.const 7)</pre> |
+| <pre>$myvar</pre>      | <pre>(get\_local $myvar)</pre> |
+| <pre>(CHR "A")</pre>   | <pre>(i32.const 0x40)</pre> |
+| <pre>"my string"</pre> | <pre>(i32.add (get\_global $memoryBase)<br>         (get\_global $S\_STRING\_7))</pre> |
+| <pre>(AND 7 8)</pre>   | <pre>(if i32 (i32.const 7)<br>  (if i32 (i32.const 8) (i32.const 1) (i32.const 0))<br>  (i32.const 0))</pre> |
+| <pre>(OR 7 8)</pre>    | <pre>(if i32 (i32.const 7)<br>  (i32.const 1)<br>  (if i32 (i32.const 8) (i32.const 1) (i32.const 0)))</pre> |
+| <pre>(LOCALS $i 7<br>        $j (i32.add $i 1))</pre> | <pre>(local $i i32 $j i32)<br>(set_local $i (i32.const 7)<br>(set_local $j (i32.add (get_local $i) (i32.const 1)))</pre> |
 
+
+## License
+
+MPL-2.0 (see `./LICENSE`)
