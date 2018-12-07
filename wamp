@@ -1,24 +1,42 @@
-#!/usr/bin/env python3
+#!/usr/bin/env node
 
-# Copyright Joel Martin <github@martintribe.org>
-# Licensed under MPL-2.0 (see ./LICENSE)
-# https://github.com/kanaka/wam
+// Copyright Joel Martin <github@martintribe.org>
+// Licensed under MPL-2.0 (see ./LICENSE)
+// https://github.com/kanaka/wam
 
-from argparse import ArgumentParser
-from wamp import read_str, eval, emit_module, empty_ctx
+const {readFileSync} = require('fs')
+const {docopt} = require('docopt')
+const {read_str, wam_eval, emit_module, empty_ctx} = require('./wamp.js')
 
-parser = ArgumentParser()
-parser.add_argument('--memorySize', type=int, default=256)
-parser.add_argument('files', nargs='+')
-opts = parser.parse_args()
-files = opts.files
-del(opts.files)
+// Parse arguments
+doc = `
+Usage:
+    wamp [--memorySize=<PAGES>] FILES...
 
-asts = []
-for f in files:
-    asts.append(read_str(open(f).read()))
+Options:
+    --memorySize=<PAGES>  memory size in 64K pages [default: 256]
+`
 
-ctx = empty_ctx()
-asts = [eval(a, ctx) for a in asts]
+let opts = docopt(doc)
+for (let k in opts) {
+    if (k.startsWith('--')) {
+        opts[k.slice(2)] = opts[k]
+        delete opts[k]
+    }
+}
 
-print(emit_module(asts, ctx, **opts.__dict__))
+// Load and parse the files
+let asts = []
+for (let f of opts.FILES) {
+    asts.push(read_str(readFileSync(f)))
+}
+//console.log("asts:", asts)
+
+// Do macro evaluation/transformation
+let ctx = empty_ctx()
+asts = asts.map(a => wam_eval(a, ctx))
+
+// Emit the resulting module
+console.log(emit_module(asts, ctx, opts))
+
+// vim:syntax=javascript

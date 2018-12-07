@@ -1,0 +1,8 @@
+{
+    "name": "wamp",
+    "version": "0.0.1",
+    "description": "WebAssembly Macro language processor",
+    "dependencies": {
+        "docopt": "0.6.2"
+    }
+}

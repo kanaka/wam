@@ -45,8 +45,8 @@ Current functionality:
   defaults to 256 but can be changed via --memorySize parameter.
 - Supports combining multiple modules into a single module.
 - Retains whitespace and comments from original wam file(s).
-- Implemented as a small python program that should be fairly easy to
-  extend with additional macro definitions.
+- Implemented as a small JavaScript/Node program that should be fairly
+  easy to extend with additional macro definitions.
 
 Future functionality:
 

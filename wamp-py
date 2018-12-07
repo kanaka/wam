@@ -1,0 +1,25 @@
+#!/usr/bin/env python3
+
+# Copyright Joel Martin <github@martintribe.org>
+# Licensed under MPL-2.0 (see ./LICENSE)
+# https://github.com/kanaka/wam
+
+from argparse import ArgumentParser
+from wamp import read_str, eval, emit_module, empty_ctx
+
+parser = ArgumentParser()
+parser.add_argument('--memorySize', type=int, default=256)
+parser.add_argument('files', nargs='+')
+opts = parser.parse_args()
+files = opts.files
+del(opts.files)
+
+asts = []
+for f in files:
+    asts.append(read_str(open(f).read()))
+#print("asts:", asts)
+
+ctx = empty_ctx()
+asts = [eval(a, ctx) for a in asts]
+
+print(emit_module(asts, ctx, **opts.__dict__))
