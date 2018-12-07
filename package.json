@@ -1,7 +1,10 @@
 {
-    "name": "wamp",
-    "version": "0.0.1",
+    "name": "@kanaka/wamp",
+    "version": "1.0.3",
     "description": "WebAssembly Macro language processor",
+    "bin": {
+        "wamp": "./wamp"
+    },
     "dependencies": {
         "docopt": "0.6.2"
     }
