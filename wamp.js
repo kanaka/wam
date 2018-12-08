@@ -167,31 +167,38 @@ function token_eval(val) {
 
 // Short circuiting logical comparisons
 function AND(args, ctx) {
-    assert(args.length > 0, "AND takes at least 1 argument")
+    assert(args.length-1 > 0, "AND takes at least 1 argument")
     let res = new List([new Literal('i32.const'), new Integer(1)])
-    for(let arg of args.slice().reverse()) {
+    for(let arg of args.slice(1).reverse()) {
         let a = wam_eval(arg, ctx)
-        res = new List([new Literal('if'), new Literal('i32'), a, res,
-                        new List([new Literal('i32.const'), new Integer(0)])])
+        res = new List([new Literal('if'),
+                        new List([new Literal('result'),
+                                  new Literal('i32')]), a,
+                                  res,
+                                  new List([new Literal('i32.const'),
+                                            new Integer(0)])])
     }
     return res
 }
 
 function OR(args, ctx) {
-    assert(args.length > 0, "OR takes at least 1 argument")
+    assert(args.length-1 > 0, "OR takes at least 1 argument")
     let res = new List([new Literal('i32.const'), new Integer(0)])
-    for (let arg of args.slice().reverse()) {
+    for (let arg of args.slice(1).reverse()) {
         let a = wam_eval(arg, ctx)
-        res = new List([new Literal('if'), new Literal('i32'), a,
-                        new List([new Literal('i32.const'), new Integer(1)]),
-                        res])
+        res = new List([new Literal('if'),
+                        new List([new Literal('result'),
+                                  new Literal('i32')]), a,
+                                  new List([new Literal('i32.const'),
+                                            new Integer(1)]),
+                                  res])
     }
     return res
 }
 
 function CHR(args, ctx) {
-    assert(args.length === 1, "CHR takes 1 argument")
-    let arg1 = args[0].val
+    assert(args.length-1 === 1, "CHR takes 1 argument")
+    let arg1 = args[1].val
     let c = token_eval(arg1)
     if (c.length !== 1) {
         throw Error("Invalid CHR macro, must be 1 character string")
@@ -200,7 +207,8 @@ function CHR(args, ctx) {
 }
 
 function STRING(args, ctx) {
-    let s = token_eval(args[0].val)
+    assert(args.length-1 === 1, "STRING takes 1 argument")
+    let s = token_eval(args[1].val)
     let sname
     if (s in ctx.string_map) {
         // Duplicate string, re-use address
@@ -214,27 +222,41 @@ function STRING(args, ctx) {
 }
 
 function STATIC_ARRAY(args, ctx) {
-    assert(args.length === 1, "STATIC_ARRAY takes 1 argument")
-    let slen = parseInt(token_eval(args[0].val))
+    assert(args.length-1 === 1, "STATIC_ARRAY takes 1 argument")
+    let slen = parseInt(token_eval(args[1].val))
     let sname = `$S_STATIC_ARRAY_${ctx.strings.length}`
     ctx.strings.push([sname, slen])
     return read_str(`(i32.add (get_global $memoryBase) (get_global ${sname}))`)
 }
 
 function LET(args, ctx) {
-    assert(args.length >= 2, "LET takes at least 2 argument")
-    assert(args.length % 2 === 0, "LET takes even number of argument")
-    let locals = [new Literal('local')]
+    assert(args.length-1 >= 2, "LET takes at least 2 argument")
+    assert((args.length-1) % 2 === 0, "LET takes even number of argument")
+    let locals = []
     let sets = []
-    for (let i = 0; i < args.length; i+=2) {
+    for (let i = 1; i < args.length; i+=2) {
         let name = args[i]
         let res = wam_eval(args[i+1], ctx)
         res.surround([], [])
-        locals.push(name, new Literal('i32'))
+        locals.push(new List([new Literal('local'), name, new Literal('i32')]))
         sets.push(new List([new Literal('set_local'), name, res]))
     }
     // return a Splice so that it items get spliced in
-    return new Splice([new List(locals)].concat(sets))
+    return new Splice(locals.concat(sets))
+}
+
+// wasm-as supports local and param forms with more than one
+// definition but wat2wasm does not, so split these up.
+function param_local(args, ctx) {
+    let kind = args[0].val
+    assert(args.length-1 >= 2, `${kind} takes at least 2 argument`)
+    assert((args.length-1) % 2 === 0, `${kind} takes even number of argument`)
+    let lst = []
+    for (let i = 1; i < args.length; i+=2) {
+        lst.push(new List([new Literal(kind), args[i], args[i+1]]))
+    }
+    // return a Splice so that it items get spliced in
+    return new Splice(lst)
 }
 
 const macros = {
@@ -243,7 +265,9 @@ const macros = {
     'CHR': CHR,
     'STRING': STRING,
     'STATIC_ARRAY': STATIC_ARRAY,
-    'LET': LET
+    'LET': LET,
+    'param': param_local,
+    'local': param_local
 }
 
 //
@@ -272,7 +296,7 @@ function wam_eval(ast, ctx) {
             lst = [new Literal('call'), a0].concat(lst)
         } else if (a0 instanceof Literal && a0.val in macros) {
             // expand macros
-            let res = macros[ast.get(0).val](ast.words().slice(a0idx+1), ctx)
+            let res = macros[ast.get(0).val](ast.words().slice(a0idx), ctx)
             if (res instanceof Splice) {
                 for (let r of res.slice()) { r.surround(ast.start, ast.end) }
             } else {
@@ -325,7 +349,7 @@ function wam_eval(ast, ctx) {
         return new List(res_lst, ast.start, ast.end)
     } else if (ast instanceof Str) {
         // Pass raw strings to the STRING macro
-        return STRING([ast], ctx)
+        return STRING([null, ast], ctx)
     } else if (ast instanceof Integer) {
         return new List([new Literal('i32.const'), ast])
     } else if (ast instanceof Float) {
