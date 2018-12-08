@@ -250,7 +250,8 @@ const macros = {
 // eval / macro expansion
 //
 
-const EVAL_HOIST = new Set(['global', 'table'])
+const EMIT_HOIST_ORDER = ['import', 'global', 'table']
+const EVAL_HOIST = new Set(EMIT_HOIST_ORDER)
 const EVAL_NONE =  new Set(['memory', 'import', 'export', 'type',
                             'get_global', 'local', 'get_local',
                             'param', 'br', 'i32.const', 'i64.const',
@@ -279,20 +280,22 @@ function wam_eval(ast, ctx) {
             }
             return res
         } else if (a0 instanceof Literal && EVAL_HOIST.has(a0.val)) {
-            // Hoist globals and table to the top
-            // TODO: this shouldn't be necessary if wasm-as was
-            // compliant with the spec which indicates that any
-            // ordering should be sufficient
+            // Hoist imports, globals, and table to the top
+            // TODO: this shouldn't be necessary if wasm-as and/or
+            // wat2wasm were compliant with the spec which indicates
+            // that any ordering should be sufficient
             if (EVAL_LAST.has(a0.val))  {
                 // eval last argument
                 let [idx, a] = nth_word(ast, -1)
                 ast.set(idx, wam_eval(a, ctx))
             }
             let ws = new Whitespace(
-                    `(; ${a0.val} ${ast.words()[1].val} hoisted to top ;)`)
+                    `(; hoisted to top: ${ast.words().slice(0,3).map(w => w.val).join(' ')} ;)`)
             ws.surround(ast.start, ast.end)
             ast.surround([new Whitespace('  ')], [new Whitespace('\n')])
-            ctx.hoist.push(ast)
+            let kind = ast.words()[0].val
+            if (!(kind in ctx.hoist)) { ctx.hoist[kind] = [] }
+            ctx.hoist[kind].push(ast)
             return ws
         } else if (a0 instanceof Literal && EVAL_NONE.has(a0.val)) {
             // don't eval arguments
@@ -430,7 +433,13 @@ function emit_module(asts, ctx, opts) {
 
 
     let mod_tokens = asts.map(a => wam_emit(a, ctx))
-    let htoks = ctx.hoist.map(h => wam_emit(h, ctx))
+    let hoist_tokens = []
+    //console.warn(ctx.hoist)
+    for (let kind of EMIT_HOIST_ORDER) {
+        //console.warn(kind, ctx.hoist[kind])
+        if (!ctx.hoist[kind]) { continue }
+        hoist_tokens.push(...ctx.hoist[kind].map(a => wam_emit(a, ctx)))
+    }
 
     let all_tokens = [
         `(module $${(ctx.modules).join('__')}\n\n`,
@@ -438,7 +447,7 @@ function emit_module(asts, ctx, opts) {
         `  (import \"env\" \"memoryBase\" (global $memoryBase i32))\n\n`
     ]
     // Hoisted global defintions
-    all_tokens.push(...[].concat.apply([], htoks), "\n")
+    all_tokens.push(...[].concat.apply([], hoist_tokens), "\n")
     // Static string/array defintions and pointers
     all_tokens.push(...string_tokens, "\n")
     // Rest of the module
@@ -450,7 +459,7 @@ function emit_module(asts, ctx, opts) {
 
 function empty_ctx() {
     return {
-        'hoist': [],
+        'hoist': {},
         'strings': [],
         'string_map': {},
         'modules': []
