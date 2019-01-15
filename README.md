@@ -2,18 +2,18 @@
 
 ## wam syntax
 
-Wam syntax is a near superset of wast syntax that is more convenient
+Wam syntax is a near superset of wat syntax that is more convenient
 for human developers to write directly.
 
-The one place where wam is not a strict superset of wast 
+The one place where wam is not a strict superset of wat
 is that it does not supports numeric indexes for globals, functions,
 and local references. But this is okay because index based references
 are much less useful to humans than they are to computers.
 
-The following extensions to the wast syntax are supported:
+The following extensions to the wat syntax are supported:
 
-- The call operation can be omitted if the function is specified by 
-  name. 
+- The call operation can be omitted if the function is specified by
+  name.
 - i32 and f32 constants can be specified directly without wrapping
   with "i32.const" or "f32.const". Floating point literals must
   include a decimal point.
@@ -40,7 +40,7 @@ The following extensions to the wast syntax are supported:
 
 Current functionality:
 
-- Processes wam syntax into standard wast syntax support.
+- Processes wam syntax into standard wat syntax support.
 - Automatically adds memory and memoryBase imports. Memory size
   defaults to 256 but can be changed via --memorySize parameter.
 - Supports combining multiple modules into a single module.
@@ -58,19 +58,19 @@ Future functionality:
 ## Example
 
 In the `examples/` directory is a fizzbuzz example that makes use of
-wam syntax. Use `wamp` to convert the example to wast source.
+wam syntax. Use `wamp` to convert the example to wat source.
 
 ```
-./wamp examples/fizzbuzz.wam examples/print.wam > fizzbuzz.wast
+./wamp examples/fizzbuzz.wam examples/print.wam > fizzbuzz.wat
 ```
 
-Examine the wam files and the resulting wast to see what processing
-and macro expansion was performanced by `wamp`. The wast source can be
+Examine the wam files and the resulting wat to see what processing
+and macro expansion was performanced by `wamp`. The wat source can be
 compiled to a wasm module using the `wasm-as` assembler from
 [binaryen](https://github.com/WebAssembly/binaryen).
 
 ```
-wasm-as fizzbuzz.wast -o fizzbuzz.wasm
+wasm-as fizzbuzz.wat -o fizzbuzz.wasm
 ```
 
 The wasm module can be executed using the
@@ -81,9 +81,9 @@ wace ./fizzbuzz.wasm
 ```
 
 
-## Examples of wam and equivalent wast:
+## Examples of wam and equivalent wat:
 
-| wam | wast |
+| wam | wat  |
 | --- | ---- |
 | <pre>($myfun)</pre>    | <pre>(call $myfun)</pre> |
 | <pre>7</pre>           | <pre>(i32.const 7)</pre> |
