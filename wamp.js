@@ -421,7 +421,7 @@ function emit_module(asts, ctx, opts) {
     if (strings) {
         let slen
         // static string/array names/pointers
-        let string_offset = 0
+        let string_offset = 4  // skip first/NULL address (if memoryBase == 0)
         for (let [name, data] of strings) {
             if (typeof(data) === "number") {
                 slen = data+1
@@ -439,7 +439,8 @@ function emit_module(asts, ctx, opts) {
 
         // static string/array data
         string_tokens.push(`  (data\n    (get_global $memoryBase)\n`)
-        string_offset = 0
+        string_tokens.push(`    "\\de\\ad\\be\\ef" ;; skip first/NULL address\n`)
+        string_offset = 4  // skip first/NULL address (if memoryBase == 0)
         for (let [name, data] of strings) {
             let sdata
             if (typeof(data) === "number") {
