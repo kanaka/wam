@@ -10,7 +10,7 @@ const assert = require('assert')
 
 function nth_word(tokens, nth) {
     if (nth < 0) {
-        let word_cnt = tokens.filter(t => !(t instanceof Whitespace)).length
+        let word_cnt = tokens.words().length
         nth = word_cnt + nth
     }
     let word_idx = 0
@@ -24,6 +24,7 @@ function nth_word(tokens, nth) {
             word_idx += 1
         }
     }
+    return [tokens.length-1, null]
 }
 
 function _escape(s) {
@@ -313,8 +314,11 @@ function wam_eval(ast, ctx) {
                 let [idx, a] = nth_word(ast, -1)
                 ast.set(idx, wam_eval(a, ctx))
             }
+            const comment_toks = ast.words().slice(0,3)
+                .filter(a => !(a instanceof List))
+                .map(a => a.val)
             let ws = new Whitespace(
-                    `(; hoisted to top: ${ast.words().slice(0,3).map(w => w.val).join(' ')} ;)`)
+                    `(; hoisted to top: ${comment_toks.join(' ')} ;)`)
             ws.surround(ast.start, ast.end)
             ast.surround([new Whitespace('  ')], [new Whitespace('\n')])
             let kind = ast.words()[0].val
