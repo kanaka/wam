@@ -219,7 +219,7 @@ function STRING(args, ctx) {
         ctx.strings.push([sname, s])
         ctx.string_map[s] = sname
     }
-    return read_str(`(i32.add (get_global $memoryBase) (get_global ${sname}))`)
+    return read_str(`(i32.add (global.get $memoryBase) (global.get ${sname}))`)
 }
 
 function STATIC_ARRAY(args, ctx) {
@@ -227,7 +227,7 @@ function STATIC_ARRAY(args, ctx) {
     let slen = parseInt(token_eval(args[1].val))
     let sname = `$S_STATIC_ARRAY_${ctx.strings.length}`
     ctx.strings.push([sname, slen])
-    return read_str(`(i32.add (get_global $memoryBase) (get_global ${sname}))`)
+    return read_str(`(i32.add (global.get $memoryBase) (global.get ${sname}))`)
 }
 
 function LET(args, ctx) {
@@ -240,7 +240,7 @@ function LET(args, ctx) {
         let res = wam_eval(args[i+1], ctx)
         res.surround([], [])
         locals.push(new List([new Literal('local'), name, new Literal('i32')]))
-        sets.push(new List([new Literal('set_local'), name, res]))
+        sets.push(new List([new Literal('local.set'), name, res]))
     }
     // return a Splice so that it items get spliced in
     return new Splice(locals.concat(sets))
@@ -278,11 +278,11 @@ const macros = {
 const EMIT_HOIST_ORDER = ['import', 'global', 'table']
 const EVAL_HOIST = new Set(EMIT_HOIST_ORDER)
 const EVAL_NONE =  new Set(['memory', 'import', 'export', 'type',
-                            'get_global', 'local', 'get_local',
+                            'global.get', 'local', 'local.get',
                             'param', 'br', 'i32.const', 'i64.const',
                             'f32.const', 'f64.const'])
 const EVAL_REST =  new Set(['module', 'func', 'memory', 'call',
-                            'set_local', 'set_global', 'block',
+                            'local.set', 'global.set', 'block',
                             'loop', 'br_if'])
 const EVAL_LAST =  new Set(['global', 'br_table'])
 
@@ -359,7 +359,7 @@ function wam_eval(ast, ctx) {
     } else if (ast instanceof Float) {
         return new List([new Literal('f32.const'), ast])
     } else if (ast instanceof Name) {
-        return new List([new Literal('get_local'), ast])
+        return new List([new Literal('local.get'), ast])
     } else {
         return ast
     }
@@ -442,7 +442,7 @@ function emit_module(asts, ctx, opts) {
                 `  (global $S_STRING_END  i32 (i32.const ${string_offset}))\n\n`)
 
         // static string/array data
-        string_tokens.push(`  (data\n    (get_global $memoryBase)\n`)
+        string_tokens.push(`  (data\n    (global.get $memoryBase)\n`)
         string_tokens.push(`    "\\de\\ad\\be\\ef" ;; skip first/NULL address\n`)
         string_offset = 4  // skip first/NULL address (if memoryBase == 0)
         for (let [name, data] of strings) {
