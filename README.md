@@ -50,6 +50,9 @@ Current functionality:
 
 Future functionality:
 
+- Support user-defined `(data ...)` sections. You can currently
+  accomplish approximately the same thing with the `STATIC\_ARRAY` or
+  `STRING` macros in your code.
 - Add elif construct
 - Allow bare names for global variables by implementing some limited
   lexical scope.

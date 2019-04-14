@@ -341,10 +341,15 @@ function wam_eval(ast, ctx) {
             let [idx, a] = nth_word(ast, -1)
             ast.set(idx, wam_eval(a, ctx))
             return ast
+        } else if (a0 instanceof Literal && a0.val === 'data') {
+            // TODO: support merging with user specified data
+            // sections.
+            throw Error(`explicit (data ...) not supported`)
         } else {
             // evaluate all elements
             lst = ast.map(e => wam_eval(e, ctx))
         }
+
         let res_lst = []
         for (let l of lst) {
             if (l instanceof Splice) { res_lst.push(...l.slice()) }
