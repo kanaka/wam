@@ -28,8 +28,10 @@ The following extensions to the wat syntax are supported:
   support 1 or more conditions and that are short-circuiting.
 - STATIC\_ARRAY macro that allocates the specified number of bytes as
   a static array in the data section. Note this creates an static
-  global array at build time not at runtime (i.e. it does not
-  dynamically allocate memory).
+  global array in the data section at build time not at runtime
+  (i.e. it does not dynamically allocate memory). STATIC\_ARRAY
+  takes an optional second argument that specifies the byte alignment.
+  The default alignment is 1 (e.g. unaligned).
 - CHR macro that converts a 1 byte string into a character (i32.const)
   value.
 - LET macro that combines functionality from "locals" and

@@ -216,17 +216,19 @@ function STRING(args, ctx) {
         sname = ctx.string_map[s]
     } else {
         sname = `$S_STRING_${ctx.strings.length}`
-        ctx.strings.push([sname, s])
+        ctx.strings.push([sname, s, 1])
         ctx.string_map[s] = sname
     }
     return read_str(`(i32.add (global.get $memoryBase) (global.get ${sname}))`)
 }
 
 function STATIC_ARRAY(args, ctx) {
-    assert(args.length-1 === 1, "STATIC_ARRAY takes 1 argument")
+    assert(args.length-1 === 1 || args.length-1 === 2,
+           "STATIC_ARRAY takes 1 or 2 arguments")
     let slen = parseInt(token_eval(args[1].val))
+    let align = args[2] ? parseInt(token_eval(args[2].val)) : 1
     let sname = `$S_STATIC_ARRAY_${ctx.strings.length}`
-    ctx.strings.push([sname, slen])
+    ctx.strings.push([sname, slen, align])
     return read_str(`(i32.add (global.get $memoryBase) (global.get ${sname}))`)
 }
 
@@ -423,6 +425,10 @@ function wam_emit(ast, ctx) {
     return toks
 }
 
+function align_pad(addr, byte_align) {
+    return byte_align - 1 - (addr - 1) % byte_align
+}
+
 function emit_module(asts, ctx, opts) {
     // Create data section with static strings
     let strings = ctx.strings
@@ -431,7 +437,12 @@ function emit_module(asts, ctx, opts) {
         let slen
         // static string/array names/pointers
         let string_offset = 4  // skip first/NULL address (if memoryBase == 0)
-        for (let [name, data] of strings) {
+        for (let [name, data, align] of strings) {
+            // align to requested alignment
+            let pad = align_pad(string_offset, align)
+            if (pad) {
+                string_offset += pad
+            }
             if (typeof(data) === "number") {
                 slen = data+1
             } else {
@@ -450,7 +461,13 @@ function emit_module(asts, ctx, opts) {
         string_tokens.push(`  (data\n    (global.get $memoryBase)\n`)
         string_tokens.push(`    "\\de\\ad\\be\\ef" ;; skip first/NULL address\n`)
         string_offset = 4  // skip first/NULL address (if memoryBase == 0)
-        for (let [name, data] of strings) {
+        for (let [name, data, align] of strings) {
+            // align to requested alignment
+            let pad = align_pad(string_offset, align)
+            if (pad) {
+                string_tokens.push('    "'+("\\00".repeat(pad))+'"\n')
+                string_offset += pad
+            }
             let sdata
             if (typeof(data) === "number") {
                 sdata = ("\x00".repeat(data))
