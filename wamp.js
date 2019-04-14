@@ -277,9 +277,9 @@ const macros = {
 // eval / macro expansion
 //
 
-const EMIT_HOIST_ORDER = ['import', 'global', 'table']
+const EMIT_HOIST_ORDER = ['memory', 'import', 'global', 'table']
 const EVAL_HOIST = new Set(EMIT_HOIST_ORDER)
-const EVAL_NONE =  new Set(['memory', 'import', 'export', 'type',
+const EVAL_NONE =  new Set(['memory', 'import', 'export', 'start', 'type',
                             'global.get', 'local', 'local.get',
                             'param', 'br', 'i32.const', 'i64.const',
                             'f32.const', 'f64.const'])
@@ -292,6 +292,19 @@ function wam_eval(ast, ctx) {
     if (ast instanceof List) {
         let [a0idx, a0] = nth_word(ast, 0)
         let lst = []
+
+        // Detect memory and memoryBase
+        if (a0 instanceof Literal) {
+            let astX = ast
+            if (a0.val === 'import') { astX = nth_word(astX, -1)[1] }
+            let aX = nth_word(astX, 0)[1]
+            if (aX.val === 'memory') { ctx.memory_defined = true }
+            if (aX.val === 'global' && nth_word(astX, 1)[1].val === '$memoryBase') {
+                ctx.memoryBase_defined = true
+            }
+        }
+
+        // Evaluate
         if (a0 instanceof Name) {
             // if first word is a $name, make it a call and evaluate the
             // rest of the list
@@ -493,10 +506,14 @@ function emit_module(asts, ctx, opts) {
     }
 
     let all_tokens = [
-        `(module $${(ctx.modules).join('__')}\n\n`,
-        `  (import \"env\" \"memory\" (memory ${opts.memorySize}))\n`,
-        `  (import \"env\" \"memoryBase\" (global $memoryBase i32))\n\n`
+        `(module $${(ctx.modules).join('__')}\n\n`
     ]
+    if (!ctx.memory_defined) {
+        all_tokens.push(`  (memory ${opts.memorySize})\n\n`)
+    }
+    if (!ctx.memoryBase_defined) {
+        all_tokens.push(`  (global $memoryBase i32 (i32.const 0))\n\n`)
+    }
     // Hoisted global defintions
     all_tokens.push(...[].concat.apply([], hoist_tokens), "\n")
     // Static string/array defintions and pointers
@@ -513,7 +530,9 @@ function empty_ctx() {
         'hoist': {},
         'strings': [],
         'string_map': {},
-        'modules': []
+        'modules': [],
+        'memory_defined': false,
+        'memoryBase_defined': false
     }
 }
 

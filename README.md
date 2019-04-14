@@ -43,8 +43,9 @@ The following extensions to the wat syntax are supported:
 Current functionality:
 
 - Processes wam syntax into standard wat syntax support.
-- Automatically adds memory and memoryBase imports. Memory size
-  defaults to 256 but can be changed via --memorySize parameter.
+- Automatically adds memory and memoryBase definitions if they
+  aren't already defined or imported. Memory size defaults to 256 but
+  can be changed via --memorySize command line parameter.
 - Supports combining multiple modules into a single module.
 - Retains whitespace and comments from original wam file(s).
 - Implemented as a small JavaScript/Node program that should be fairly
