@@ -18,7 +18,7 @@ The following extensions to the wat syntax are supported:
   with `i32.const` or `f32.const`. Floating point literals must
   include a decimal point.
 - Local variables can be specified directly without wrapping with
-  `get\_local`.
+  `local.get`.
 - Static strings can be specified inline. All static strings in the
   code will be de-duplicated, they will be added to a global data
   section, pointer variables will be created that index into the data
@@ -26,16 +26,16 @@ The following extensions to the wat syntax are supported:
   a lookup relative to `$memoryBase`.
 - `AND` and `OR` macros that implement i32 boolean logic operations
   which support 1 or more conditions and that are short-circuiting.
-- `STATIC\_ARRAY` macro that allocates the specified number of bytes as
+- `STATIC_ARRAY` macro that allocates the specified number of bytes as
   a static array in the data section. Note this creates an static
   global array in the `data` section at build time not at runtime
-  (i.e. it does not dynamically allocate memory). `STATIC\_ARRAY`
+  (i.e. it does not dynamically allocate memory). `STATIC_ARRAY`
   takes an optional second argument that specifies the byte alignment.
   The default alignment is 1 (e.g. unaligned).
 - `CHR` macro that converts a 1 byte string into a character (i.e.
   `i32.const`) value.
 - `LET` macro that combines functionality from `locals` and
-  `set\_local` into a single construct that allow more concise
+  `local.set` into a single construct that allow more concise
   declaration and initialization of i32 values.
 
 ## wamp: wam processor
@@ -54,7 +54,7 @@ Current functionality:
 Future functionality:
 
 - Support user-defined `(data ...)` sections. You can currently
-  accomplish approximately the same thing with the `STATIC\_ARRAY` or
+  accomplish approximately the same thing with the `STATIC_ARRAY` or
   `STRING` macros in your code.
 - Add an elif construct (complex conditionals currently are become
   highly indented and hard to read)
@@ -96,13 +96,13 @@ wace ./fizzbuzz.wasm
 | --- | ---- |
 | <pre>($myfun)</pre>    | <pre>(call $myfun)</pre> |
 | <pre>7</pre>           | <pre>(i32.const 7)</pre> |
-| <pre>$myvar</pre>      | <pre>(get\_local $myvar)</pre> |
+| <pre>$myvar</pre>      | <pre>(local.get $myvar)</pre> |
 | <pre>(CHR "A")</pre>   | <pre>(i32.const 0x40)</pre> |
-| <pre>"my string"</pre> | <pre>(global $S\_STRING\_7  i32 (i32.const 73))<br>(data ... "my string\00" ...)<br>...<br>(i32.add (get\_global $memoryBase)<br>         (get\_global $S\_STRING\_7))</pre> |
-| <pre>(STATIC\_ARRAY 6)</pre> | <pre>(global $S\_STATIC\_ARRAY\_8  i32 (i32.const 80))<br>(data ... "\00\00\00\00\00\00" ...)<br>...<br>(i32.add (get\_global $memoryBase)<br>         (get\_global $S\_STATIC\_ARRAY\_8))</pre> |
+| <pre>"my string"</pre> | <pre>(global $S\_STRING\_7  i32 (i32.const 73))<br>(data ... "my string\00" ...)<br>...<br>(i32.add (global.get $memoryBase)<br>         (global.get $S\_STRING\_7))</pre> |
+| <pre>(STATIC\_ARRAY 6)</pre> | <pre>(global $S\_STATIC\_ARRAY\_8  i32 (i32.const 80))<br>(data ... "\00\00\00\00\00\00" ...)<br>...<br>(i32.add (global.get $memoryBase)<br>         (global.get $S\_STATIC\_ARRAY\_8))</pre> |
 | <pre>(AND 7 8)</pre>   | <pre>(if i32 (i32.const 7)<br>  (if i32 (i32.const 8) (i32.const 1) (i32.const 0))<br>  (i32.const 0))</pre> |
 | <pre>(OR 7 8)</pre>    | <pre>(if i32 (i32.const 7)<br>  (i32.const 1)<br>  (if i32 (i32.const 8) (i32.const 1) (i32.const 0)))</pre> |
-| <pre>(LET $i 7<br>     $j (i32.add $i 1))</pre> | <pre>(local $i i32 $j i32)<br>(set\_local $i (i32.const 7)<br>(set\_local $j (i32.add (get\_local $i) (i32.const 1)))</pre> |
+| <pre>(LET $i 7<br>     $j (i32.add $i 1))</pre> | <pre>(local $i i32 $j i32)<br>(local.set $i (i32.const 7)<br>(local.set $j (i32.add (local.get $i) (i32.const 1)))</pre> |
 
 
 ## License
