@@ -472,13 +472,14 @@ function emit_module(asts, ctx, opts) {
 
         // static string/array data
         string_tokens.push(`  (data\n    (global.get $memoryBase)\n`)
-        string_tokens.push(`    "\\de\\ad\\be\\ef" ;; skip first/NULL address\n`)
+        let data_string = `    ;; Place "deadbeef" at first/NULL address\n`
+        data_string += `    "\\de\\ad\\be\\ef`
         string_offset = 4  // skip first/NULL address (if memoryBase == 0)
         for (let [name, data, align] of strings) {
             // align to requested alignment
             let pad = align_pad(string_offset, align)
             if (pad) {
-                string_tokens.push('    "'+("\\00".repeat(pad))+'"\n')
+                data_string += "\\00".repeat(pad)
                 string_offset += pad
             }
             let sdata
@@ -488,11 +489,10 @@ function emit_module(asts, ctx, opts) {
                 sdata = data
             }
             slen = sdata.length+1
-            let escaped = '"'+(_escape(sdata)+'\\00"').padEnd(29)
-            string_tokens.push(`    ${escaped} ;; ${string_offset}\n`)
+            data_string += _escape(sdata)+'\\00'
             string_offset += slen
         }
-        string_tokens.push(`  )\n\n`)
+        string_tokens.push(data_string, `")\n\n`)
     }
 
 
