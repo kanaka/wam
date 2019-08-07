@@ -298,7 +298,9 @@ function wam_eval(ast, ctx) {
             let astX = ast
             if (a0.val === 'import') { astX = nth_word(astX, -1)[1] }
             let aX = nth_word(astX, 0)[1]
-            if (aX.val === 'memory') { ctx.memory_defined = true }
+            if (aX.val === 'memory') {
+                ctx.memory_defined = true
+            }
             if (aX.val === 'global' && nth_word(astX, 1)[1].val === '$memoryBase') {
                 ctx.memoryBase_defined = true
             }
@@ -471,7 +473,11 @@ function emit_module(asts, ctx, opts) {
                 `  (global $S_STRING_END  i32 (i32.const ${string_offset}))\n\n`)
 
         // static string/array data
-        string_tokens.push(`  (data\n    (global.get $memoryBase)\n`)
+        if (ctx.memoryBase_defined) {
+            string_tokens.push(`  (data\n    (global.get $memoryBase)\n`)
+        } else {
+            string_tokens.push(`  (data\n    (i32.const ${opts.memoryBase})\n`)
+        }
         let data_string = `    ;; Place "deadbeef" at first/NULL address\n`
         data_string += `    "\\de\\ad\\be\\ef`
         string_offset = 4  // skip first/NULL address (if memoryBase == 0)
@@ -512,7 +518,7 @@ function emit_module(asts, ctx, opts) {
         all_tokens.push(`  (memory ${opts.memorySize})\n\n`)
     }
     if (!ctx.memoryBase_defined) {
-        all_tokens.push(`  (global $memoryBase i32 (i32.const 0))\n\n`)
+        all_tokens.push(`  (global $memoryBase i32 (i32.const ${opts.memoryBase}))\n\n`)
     }
     // Hoisted global defintions
     all_tokens.push(...[].concat.apply([], hoist_tokens), "\n")

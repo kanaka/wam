@@ -11,10 +11,11 @@ const {read_str, wam_eval, emit_module, empty_ctx} = require('./wamp.js')
 // Parse arguments
 doc = `
 Usage:
-    wamp [--memorySize=<PAGES>] FILES...
+    wamp [--memorySize=<PAGES>] [--memoryBase=<BYTES>] FILES...
 
 Options:
     --memorySize=<PAGES>  memory size in 64K pages [default: 256]
+    --memoryBase=<BYTES>  static memory offset bytes [default: 4096]
 `
 
 let opts = docopt(doc)
